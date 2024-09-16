@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: docker/Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-service
+      - web-app
+      - inventory-service
+      - message-service
+      - telegram-bot
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - DB_HOST=auth-service-db
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - DB_DATABASE=auth_service
+    depends_on:
+      - auth-service-db
+
+  web-app:
+    build:
+      context: ./web-app
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8002:8000"
+    depends_on:
+      - auth-service
+
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      - DB_HOST=inventory-service-db
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - DB_DATABASE=inventory_service
+    depends_on:
+      - inventory-service-db
+
+  message-service:
+    build:
+      context: ./message-service
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8004:8000"
+    environment:
+      - DB_HOST=message-service-db
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - DB_DATABASE=message_service
+    depends_on:
+      - message-service-db
+
+  telegram-bot:
+    build:
+      context: ./telegram-bot
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8005:8000"
+    depends_on:
+      - message-service
+      - inventory-service
+
+  auth-service-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: auth_service
+    volumes:
+      - auth-service-db-data:/var/lib/mysql
+
+  inventory-service-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: inventory_service
+    volumes:
+      - inventory-service-db-data:/var/lib/mysql
+
+  message-service-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: message_service
+    volumes:
+      - message-service-db-data:/var/lib/mysql
+
+volumes:
+  auth-service-db-data:
+  inventory-service-db-data:
+  message-service-db-data:
